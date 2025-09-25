@@ -10,11 +10,10 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 if (args.Length == 0 || args[0] == "-h")
 {
     Console.WriteLine("MWLathe v1");
-    // TODO: Github link
-    Console.WriteLine("[GITHUB LINK HERE]");
+    Console.WriteLine("https://github.com/KnobelKnight/MWLathe");
     Console.WriteLine("Usage: mwlathe.exe <input.esm/esp> <output.esm/esp> <id_map.csv/tsv>");
     Console.WriteLine("For id_map: <old ID>,<new ID>");
-    Console.WriteLine("Make sure id_map is headerless!");
+    Console.WriteLine("Make sure id_map is headerless and without quotes!");
     Environment.Exit(0);
 }
 else if (args.Length < 3
