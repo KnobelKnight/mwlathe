@@ -6,9 +6,9 @@ namespace MWLathe.Records
     public class CLOT : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
+        public string? MODL { get; set; }
         public string? FNAM { get; set; }
-        public CTDT CTDT { get; set; } = new CTDT();
+        public CTDT? CTDT { get; set; }
         public string? SCRI { get; set; }
         public string? ITEX { get; set; }
         public List<ModelPart> Parts { get; set; } = new List<ModelPart>();
@@ -43,6 +43,7 @@ namespace MWLathe.Records
                         bytesRead += FNAM.Length + 1;
                         break;
                     case "CTDT":
+                        CTDT = new CTDT();
                         bytesRead += bs.Read(buffer, 0, 12);
                         CTDT.Type = BitConverter.ToUInt32(buffer);
                         CTDT.Weight = BitConverter.ToSingle(buffer, 4);
@@ -103,12 +104,18 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
             if (FNAM is not null)
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += CTDT.StructSize + 8;
+            if (CTDT is not null)
+            {
+                RecordSize += CTDT.StructSize + 8;
+            }
             if (SCRI is not null)
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
@@ -130,16 +137,22 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
             if (FNAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            CTDT.Write(ts);
+            if (CTDT is not null)
+            {
+                CTDT.Write(ts);
+            }
             if (SCRI is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("SCRI"));

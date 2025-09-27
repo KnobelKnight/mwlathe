@@ -5,9 +5,9 @@ namespace MWLathe.Records
     public class GLOB : Record
     {
         public string NAME { get; set; }
-        public char FNAM { get; set; }
+        public char? FNAM { get; set; }
         // Always a float!
-        public float FLTV { get; set; }
+        public float? FLTV { get; set; }
 
         public override void Populate(BufferedStream bs)
         {
@@ -55,8 +55,14 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += 8 + 1; // FNAM
-            RecordSize += 8 + 4; // FLTV
+            if (FNAM.HasValue)
+            {
+                RecordSize += 8 + 1; // FNAM
+            }
+            if (FLTV.HasValue)
+            {
+                RecordSize += 8 + 4; // FLTV
+            }
         }
 
         public override void Write(FileStream ts)
@@ -65,12 +71,18 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
-            ts.Write(BitConverter.GetBytes(1));
-            ts.WriteByte((byte)FNAM);
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLTV"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(FLTV));
+            if (FNAM.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
+                ts.Write(BitConverter.GetBytes(1));
+                ts.WriteByte((byte)FNAM.Value);
+            }
+            if (FLTV.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLTV"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(FLTV.Value));
+            }
             if (Deleted.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DELE"));
