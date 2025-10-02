@@ -7,7 +7,7 @@ namespace MWLathe.Records
     {
         public string NAME { get; set; }
         public string? FNAM { get; set; }
-        public SPDT SPDT { get; set; } = new SPDT();
+        public SPDT? SPDT { get; set; }
         public List<ENAM> Effects { get; set; } = new List<ENAM>();
 
         public override void Populate(BufferedStream bs)
@@ -35,6 +35,7 @@ namespace MWLathe.Records
                         bytesRead += FNAM.Length + 1;
                         break;
                     case "SPDT":
+                        SPDT = new SPDT();
                         bytesRead += bs.Read(buffer, 0, 12);
                         SPDT.Type = BitConverter.ToUInt32(buffer);
                         SPDT.Cost = BitConverter.ToUInt32(buffer, 4);
@@ -75,7 +76,10 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += SPDT.StructSize + 8;
+            if (SPDT is not null)
+            {
+                RecordSize += SPDT.StructSize + 8;
+            }
             RecordSize += (uint)Effects.Count * (8 + ENAM.StructSize);
         }
 
@@ -91,7 +95,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            SPDT.Write(ts);
+            if (SPDT is not null)
+            {
+                SPDT.Write(ts);
+            }
             foreach (var effect in Effects)
             {
                 effect.Write(ts);

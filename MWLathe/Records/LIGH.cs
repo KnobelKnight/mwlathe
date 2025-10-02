@@ -9,7 +9,7 @@ namespace MWLathe.Records
         public string? MODL { get; set; }
         public string? FNAM { get; set; }
         public string? ITEX { get; set; }
-        public LHDT LHDT { get; set; } = new LHDT();
+        public LHDT? LHDT { get; set; }
         public string? SNAM { get; set; }
         public string? SCRI { get; set; }
 
@@ -46,6 +46,7 @@ namespace MWLathe.Records
                         bytesRead += ITEX.Length + 1;
                         break;
                     case "LHDT":
+                        LHDT = new LHDT();
                         bytesRead += bs.Read(buffer, 0, 24);
                         LHDT.Weight = BitConverter.ToSingle(buffer);
                         LHDT.Value = BitConverter.ToUInt32(buffer, 4);
@@ -106,7 +107,10 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + ITEX.Length + 1);
             }
-            RecordSize += LHDT.StructSize + 8;
+            if (LHDT is not null)
+            {
+                RecordSize += LHDT.StructSize + 8;
+            }
             if (SCRI is not null)
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
@@ -141,7 +145,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(ITEX.Length + 1));
                 ts.Write(EncodeZString(ITEX));
             }
-            LHDT.Write(ts);
+            if (LHDT is not null)
+            {
+                LHDT.Write(ts);
+            }
             if (SCRI is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("SCRI"));

@@ -6,10 +6,10 @@ namespace MWLathe.Records
     public class ARMO : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
-        public string FNAM { get; set; }
+        public string? MODL { get; set; }
+        public string? FNAM { get; set; }
         public string? SCRI { get; set; }
-        public AODT AODT { get; set; } = new AODT();
+        public AODT? AODT { get; set; }
         public string? ITEX { get; set; }
         public List<ModelPart> Parts { get; set; } = new List<ModelPart>();
         public string? ENAM { get; set; }
@@ -47,6 +47,7 @@ namespace MWLathe.Records
                         bytesRead += SCRI.Length + 1;
                         break;
                     case "AODT":
+                        AODT = new AODT();
                         bytesRead += bs.Read(buffer, 0, 24);
                         AODT.Type = BitConverter.ToUInt32(buffer);
                         AODT.Weight = BitConverter.ToSingle(buffer, 4);
@@ -105,13 +106,22 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
-            RecordSize += (uint)(8 + FNAM.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
+            if (FNAM is not null)
+            {
+                RecordSize += (uint)(8 + FNAM.Length + 1);
+            }
             if (SCRI is not null)
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
             }
-            RecordSize += AODT.StructSize + 8;
+            if (AODT is not null)
+            {
+                RecordSize += AODT.StructSize + 8;
+            }
             if (ITEX is not null)
             {
                 RecordSize += (uint)(8 + ITEX.Length + 1);
@@ -129,19 +139,28 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
-            ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
-            ts.Write(EncodeZString(FNAM));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
+            if (FNAM is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
+                ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
+                ts.Write(EncodeZString(FNAM));
+            }
             if (SCRI is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("SCRI"));
                 ts.Write(BitConverter.GetBytes(SCRI.Length + 1));
                 ts.Write(EncodeZString(SCRI));
             }
-            AODT.Write(ts);
+            if (AODT is not null)
+            {
+                AODT.Write(ts);
+            }
             if (ITEX is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("ITEX"));

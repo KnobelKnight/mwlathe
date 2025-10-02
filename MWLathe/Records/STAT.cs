@@ -5,7 +5,7 @@ namespace MWLathe.Records
     public class STAT : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
+        public string? MODL { get; set; }
 
         public override void Populate(BufferedStream bs)
         {
@@ -49,7 +49,10 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
         }
 
         public override void Write(FileStream ts)
@@ -58,9 +61,12 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
             if (Deleted.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DELE"));

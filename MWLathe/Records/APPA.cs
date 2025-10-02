@@ -9,7 +9,7 @@ namespace MWLathe.Records
         public string? MODL { get; set; }
         public string? FNAM { get; set; }
         public string? SCRI { get; set; }
-        public AADT AADT { get; set; } = new AADT();
+        public AADT? AADT { get; set; }
         public string? ITEX { get; set; }
 
         public override void Populate(BufferedStream bs)
@@ -45,6 +45,7 @@ namespace MWLathe.Records
                         bytesRead += SCRI.Length + 1;
                         break;
                     case "AADT":
+                        AADT = new AADT();
                         bytesRead += bs.Read(buffer, 0, 16);
                         AADT.Type = BitConverter.ToUInt32(buffer);
                         AADT.Quality = BitConverter.ToSingle(buffer, 4);
@@ -90,7 +91,10 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
             }
-            RecordSize += AADT.StructSize + 8;
+            if (AADT is not null)
+            {
+                RecordSize += AADT.StructSize + 8;
+            }
             if (ITEX is not null)
             {
                 RecordSize += (uint)(8 + ITEX.Length + 1);
@@ -121,7 +125,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(SCRI.Length + 1));
                 ts.Write(EncodeZString(SCRI));
             }
-            AADT.Write(ts);
+            if (AADT is not null)
+            {
+                AADT.Write(ts);
+            }
             if (ITEX is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("ITEX"));

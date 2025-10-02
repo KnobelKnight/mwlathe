@@ -6,9 +6,9 @@ namespace MWLathe.Records
     public class BODY : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
+        public string? MODL { get; set; }
         public string? FNAM { get; set; } // This may not exist, despite what UESP says
-        public BYDT BYDT { get; set; } = new BYDT();
+        public BYDT? BYDT { get; set; }
 
         public override void Populate(BufferedStream bs)
         {
@@ -39,6 +39,7 @@ namespace MWLathe.Records
                         bytesRead += FNAM.Length + 1;
                         break;
                     case "BYDT":
+                        BYDT = new BYDT();
                         bytesRead += bs.Read(buffer, 0, 4);
                         BYDT.Part = buffer[0];
                         BYDT.Vampiric = buffer[1];
@@ -67,12 +68,18 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
             if (FNAM is not null)
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += BYDT.StructSize + 8;
+            if (BYDT is not null)
+            {
+                RecordSize += BYDT.StructSize + 8;
+            }
         }
 
         public override void Write(FileStream ts)
@@ -81,16 +88,22 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
             if (FNAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            BYDT.Write(ts);
+            if (BYDT is not null)
+            {
+                BYDT.Write(ts);
+            }
             if (Deleted.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DELE"));

@@ -5,8 +5,8 @@ namespace MWLathe.Records
     public class LEVI : Record
     {
         public string NAME { get; set; }
-        public uint DATA { get; set; }
-        public byte NNAM { get; set; }
+        public uint? DATA { get; set; }
+        public byte? NNAM { get; set; }
         public uint? INDX { get; set; }
         public List<(string, ushort)> Items { get; set; } = new List<(string, ushort)>();
 
@@ -75,8 +75,14 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += 12; // DATA
-            RecordSize += 9; // NNAM
+            if (DATA.HasValue)
+            {
+                RecordSize += 12;
+            }
+            if (NNAM.HasValue)
+            {
+                RecordSize += 9;
+            }
             if (INDX.HasValue)
             {
                 RecordSize += 12;
@@ -90,12 +96,18 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DATA"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(DATA));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NNAM"));
-            ts.Write(BitConverter.GetBytes(1));
-            ts.WriteByte(NNAM);
+            if (DATA.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DATA"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(DATA.Value));
+            }
+            if (NNAM.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NNAM"));
+                ts.Write(BitConverter.GetBytes(1));
+                ts.WriteByte(NNAM.Value);
+            }
             if (INDX.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("INDX"));

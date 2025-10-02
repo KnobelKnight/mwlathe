@@ -8,7 +8,7 @@ namespace MWLathe.Records
         public string NAME { get; set; }
         // This may not exist, despite what UESP says
         public string? FNAM { get; set; }
-        public SOUN_DATA DATA { get; set; } = new SOUN_DATA();
+        public SOUN_DATA? DATA { get; set; }
 
         public override void Populate(BufferedStream bs)
         {
@@ -35,6 +35,7 @@ namespace MWLathe.Records
                         bytesRead += FNAM.Length + 1;
                         break;
                     case "DATA":
+                        DATA = new SOUN_DATA();
                         bytesRead += bs.Read(buffer, 0, 3);
                         DATA.Volume = buffer[0];
                         DATA.MinRange = buffer[1];
@@ -62,7 +63,10 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += SOUN_DATA.StructSize + 8;
+            if (DATA is not null)
+            {
+                RecordSize += SOUN_DATA.StructSize + 8;
+            }
         }
 
         public override void Write(FileStream ts)
@@ -77,7 +81,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            DATA.Write(ts);
+            if (DATA is not null)
+            {
+                DATA.Write(ts);
+            }
             if (Deleted.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("DELE"));

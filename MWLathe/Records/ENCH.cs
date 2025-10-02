@@ -6,7 +6,7 @@ namespace MWLathe.Records
     public class ENCH : Record
     {
         public string NAME { get; set; }
-        public ENDT ENDT { get; set; } = new ENDT();
+        public ENDT? ENDT { get; set; }
         public List<ENAM> Effects { get; set; } = new List<ENAM>();
 
         public override void Populate(BufferedStream bs)
@@ -30,6 +30,7 @@ namespace MWLathe.Records
                         bytesRead += NAME.Length + 1;
                         break;
                     case "ENDT":
+                        ENDT = new ENDT();
                         bytesRead += bs.Read(buffer, 0, 16);
                         ENDT.Type = BitConverter.ToUInt32(buffer);
                         ENDT.Cost = BitConverter.ToUInt32(buffer, 4);
@@ -67,7 +68,10 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += 8 + ENDT.StructSize;
+            if (ENDT is not null)
+            {
+                RecordSize += 8 + ENDT.StructSize;
+            }
             RecordSize += (uint)Effects.Count * (8 + ENAM.StructSize);
         }
 
@@ -77,7 +81,10 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ENDT.Write(ts);
+            if (ENDT is not null)
+            {
+                ENDT.Write(ts);
+            }
             foreach (var effect in Effects)
             {
                 effect.Write(ts);

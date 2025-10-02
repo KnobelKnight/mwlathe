@@ -6,16 +6,16 @@ namespace MWLathe.Records
     public class CREA : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
+        public string? MODL { get; set; }
         public string? CNAM { get; set; }
         public string? FNAM { get; set; }
         public string? SCRI { get; set; }
-        public CREA_NPDT NPDT { get; set; } = new CREA_NPDT();
-        public uint FLAG { get; set; }
+        public CREA_NPDT? NPDT { get; set; }
+        public uint? FLAG { get; set; }
         public float? XSCL { get; set; }
         public List<NPCO> Items { get; set; } = new List<NPCO>();
         public List<string> Spells { get; set; } = new List<string>();
-        public AIDT AIDT { get; set; } = new AIDT();
+        public AIDT? AIDT { get; set; }
         public List<TravelDestination> Destinations { get; set; } = new List<TravelDestination>();
         public List<AIPackage> AIPackages { get; set; } = new List<AIPackage>();
 
@@ -58,6 +58,7 @@ namespace MWLathe.Records
                         bytesRead += SCRI.Length + 1;
                         break;
                     case "NPDT":
+                        NPDT = new CREA_NPDT();
                         bytesRead += bs.Read(buffer, 0, 96);
                         NPDT.Type = BitConverter.ToUInt32(buffer);
                         NPDT.Level = BitConverter.ToUInt32(buffer, 4);
@@ -105,6 +106,7 @@ namespace MWLathe.Records
                         Spells.Add(Encoding.GetEncoding("Windows-1252").GetString(buffer, 0, 32).TrimEnd('\0'));
                         break;
                     case "AIDT":
+                        AIDT = new AIDT();
                         bytesRead += bs.Read(buffer, 0, 12);
                         AIDT.Hello = buffer[0];
                         AIDT.Junk = buffer[1];
@@ -239,7 +241,10 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
             if (CNAM is not null)
             {
                 RecordSize += (uint)(8 + CNAM.Length + 1);
@@ -252,15 +257,24 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
             }
-            RecordSize += CREA_NPDT.StructSize + 8;
-            RecordSize += 12; // FLAG
+            if (NPDT is not null)
+            {
+                RecordSize += CREA_NPDT.StructSize + 8;
+            }
+            if (FLAG.HasValue)
+            {
+                RecordSize += 12;
+            }
             if (XSCL.HasValue)
             {
                 RecordSize += 12;
             }
             RecordSize += (uint)Items.Count * (NPCO.StructSize + 8);
             RecordSize += (uint)(40 * Spells.Count);
-            RecordSize += AIDT.StructSize + 8;
+            if (AIDT is not null)
+            {
+                RecordSize += AIDT.StructSize + 8;
+            }
             RecordSize += (uint)Destinations.Sum(x => x.GetByteSize());
             RecordSize += (uint)AIPackages.Sum(x => x.GetByteSize());
         }
@@ -271,9 +285,12 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
             if (CNAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("CNAM"));
@@ -292,10 +309,16 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(SCRI.Length + 1));
                 ts.Write(EncodeZString(SCRI));
             }
-            NPDT.Write(ts);
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(FLAG));
+            if (NPDT is not null)
+            {
+                NPDT.Write(ts);
+            }
+            if (FLAG.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(FLAG.Value));
+            }
             if (XSCL.HasValue)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("XSCL"));
@@ -312,7 +335,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(32));
                 ts.Write(EncodeChar32(spell));
             }
-            AIDT.Write(ts);
+            if (AIDT is not null)
+            {
+                AIDT.Write(ts);
+            }
             foreach (var destination in Destinations)
             {
                 destination.Write(ts);

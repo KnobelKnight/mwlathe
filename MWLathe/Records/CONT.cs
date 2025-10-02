@@ -6,10 +6,10 @@ namespace MWLathe.Records
     public class CONT : Record
     {
         public string NAME { get; set; }
-        public string MODL { get; set; }
+        public string? MODL { get; set; }
         public string? FNAM { get; set; }
-        public float CNDT { get; set; }
-        public uint FLAG { get; set; }
+        public float? CNDT { get; set; }
+        public uint? FLAG { get; set; }
         public List<NPCO> Items { get; set; } = new List<NPCO>();
         public string? SCRI { get; set; }
 
@@ -92,13 +92,22 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + MODL.Length + 1);
+            if (MODL is not null)
+            {
+                RecordSize += (uint)(8 + MODL.Length + 1);
+            }
             if (FNAM is not null)
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += 12; // CNDT
-            RecordSize += 12; // FLAG
+            if (CNDT.HasValue)
+            {
+                RecordSize += 12;
+            }
+            if (FLAG.HasValue)
+            {
+                RecordSize += 12;
+            }
             if (SCRI is not null)
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
@@ -112,21 +121,30 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
-            ts.Write(BitConverter.GetBytes(MODL.Length + 1));
-            ts.Write(EncodeZString(MODL));
+            if (MODL is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("MODL"));
+                ts.Write(BitConverter.GetBytes(MODL.Length + 1));
+                ts.Write(EncodeZString(MODL));
+            }
             if (FNAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("CNDT"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(CNDT));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(FLAG));
+            if (CNDT.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("CNDT"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(CNDT.Value));
+            }
+            if (FLAG.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(FLAG.Value));
+            }
             if (SCRI is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("SCRI"));

@@ -10,7 +10,7 @@ namespace MWLathe.Records
         public string? TEXT { get; set; }
         public string? SCRI { get; set; }
         public string? FNAM { get; set; }
-        public ALDT ALDT { get; set; } = new ALDT();
+        public ALDT? ALDT { get; set; }
         public List<ENAM> Effects { get; set; } = new List<ENAM>();
 
         public override void Populate(BufferedStream bs)
@@ -50,6 +50,7 @@ namespace MWLathe.Records
                         bytesRead += FNAM.Length + 1;
                         break;
                     case "ALDT":
+                        ALDT = new ALDT();
                         bytesRead += bs.Read(buffer, 0, 12);
                         ALDT.Weight = BitConverter.ToSingle(buffer);
                         ALDT.Value = BitConverter.ToUInt32(buffer, 4);
@@ -106,7 +107,10 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += ALDT.StructSize + 8;
+            if (ALDT is not null)
+            {
+                RecordSize += ALDT.StructSize + 8;
+            }
             RecordSize += (uint)Effects.Count * (ENAM.StructSize + 8);
         }
 
@@ -140,7 +144,10 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            ALDT.Write(ts);
+            if (ALDT is not null)
+            {
+                ALDT.Write(ts);
+            }
             foreach (var effect in Effects)
             {
                 effect.Write(ts);

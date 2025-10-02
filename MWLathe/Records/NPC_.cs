@@ -8,14 +8,14 @@ namespace MWLathe.Records
         public string NAME { get; set; }
         public string? MODL { get; set; }
         public string? FNAM { get; set; }
-        public string RNAM { get; set; }
-        public string CNAM { get; set; }
+        public string? RNAM { get; set; }
+        public string? CNAM { get; set; }
         public string? ANAM { get; set; }
-        public string BNAM { get; set; }
+        public string? BNAM { get; set; }
         public string? KNAM { get; set; }
         public string? SCRI { get; set; }
-        public NPC_NPDT NPDT { get; set; } = new NPC_NPDT();
-        public uint FLAG { get; set; }
+        public NPC_NPDT? NPDT { get; set; }
+        public uint? FLAG { get; set; }
         public List<NPCO> Items { get; set; } = new List<NPCO>();
         public List<string> Spells { get; set; } = new List<string>();
         public AIDT? AIDT { get; set; }
@@ -78,6 +78,7 @@ namespace MWLathe.Records
                     case "NPDT":
                         if (fieldSize == 12)
                         {
+                            NPDT = new NPC_NPDT();
                             bytesRead += bs.Read(buffer, 0, 12);
                             NPDT.Level = BitConverter.ToUInt16(buffer);
                             NPDT.Disposition = buffer[2];
@@ -250,11 +251,11 @@ namespace MWLathe.Records
                 }
                 NAME = newID;
             }
-            if (RNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
+            if (RNAM is not null && RNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
             {
                 RNAM = newID;
             }
-            if (CNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
+            if (CNAM is not null && CNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
             {
                 CNAM = newID;
             }
@@ -262,7 +263,7 @@ namespace MWLathe.Records
             {
                 ANAM = newID;
             }
-            if (BNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
+            if (BNAM is not null && BNAM.Equals(oldID, StringComparison.OrdinalIgnoreCase))
             {
                 BNAM = newID;
             }
@@ -297,13 +298,22 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + FNAM.Length + 1);
             }
-            RecordSize += (uint)(8 + RNAM.Length + 1);
-            RecordSize += (uint)(8 + CNAM.Length + 1);
+            if (RNAM is not null)
+            {
+                RecordSize += (uint)(8 + RNAM.Length + 1);
+            }
+            if (CNAM is not null)
+            {
+                RecordSize += (uint)(8 + CNAM.Length + 1);
+            }
             if (ANAM is not null)
             {
                 RecordSize += (uint)(8 + ANAM.Length + 1);
             }
-            RecordSize += (uint)(8 + BNAM.Length + 1);
+            if (BNAM is not null)
+            {
+                RecordSize += (uint)(8 + BNAM.Length + 1);
+            }
             if (KNAM is not null)
             {
                 RecordSize += (uint)(8 + KNAM.Length + 1);
@@ -312,8 +322,14 @@ namespace MWLathe.Records
             {
                 RecordSize += (uint)(8 + SCRI.Length + 1);
             }
-            RecordSize += 8 + NPDT.GetStructSize();
-            RecordSize += 12; // FLAG
+            if (NPDT is not null)
+            {
+                RecordSize += 8 + NPDT.GetStructSize();
+            }
+            if (FLAG.HasValue)
+            {
+                RecordSize += 12;
+            }
             RecordSize += (uint)Items.Count * (NPCO.StructSize + 8);
             RecordSize += (uint)(40 * Spells.Count);
             if (AIDT is not null)
@@ -342,21 +358,30 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
                 ts.Write(EncodeZString(FNAM));
             }
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("RNAM"));
-            ts.Write(BitConverter.GetBytes(RNAM.Length + 1));
-            ts.Write(EncodeZString(RNAM));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("CNAM"));
-            ts.Write(BitConverter.GetBytes(CNAM.Length + 1));
-            ts.Write(EncodeZString(CNAM));
+            if (RNAM is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("RNAM"));
+                ts.Write(BitConverter.GetBytes(RNAM.Length + 1));
+                ts.Write(EncodeZString(RNAM));
+            }
+            if (CNAM is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("CNAM"));
+                ts.Write(BitConverter.GetBytes(CNAM.Length + 1));
+                ts.Write(EncodeZString(CNAM));
+            }
             if (ANAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("ANAM"));
                 ts.Write(BitConverter.GetBytes(ANAM.Length + 1));
                 ts.Write(EncodeZString(ANAM));
             }
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("BNAM"));
-            ts.Write(BitConverter.GetBytes(BNAM.Length + 1));
-            ts.Write(EncodeZString(BNAM));
+            if (BNAM is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("BNAM"));
+                ts.Write(BitConverter.GetBytes(BNAM.Length + 1));
+                ts.Write(EncodeZString(BNAM));
+            }
             if (KNAM is not null)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("KNAM"));
@@ -369,10 +394,16 @@ namespace MWLathe.Records
                 ts.Write(BitConverter.GetBytes(SCRI.Length + 1));
                 ts.Write(EncodeZString(SCRI));
             }
-            NPDT.Write(ts);
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
-            ts.Write(BitConverter.GetBytes(4));
-            ts.Write(BitConverter.GetBytes(FLAG));
+            if (NPDT is not null)
+            {
+                NPDT.Write(ts);
+            }
+            if (FLAG.HasValue)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FLAG"));
+                ts.Write(BitConverter.GetBytes(4));
+                ts.Write(BitConverter.GetBytes(FLAG.Value));
+            }
             foreach (var item in Items)
             {
                 item.Write(ts);

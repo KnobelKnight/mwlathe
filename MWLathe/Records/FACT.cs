@@ -6,9 +6,9 @@ namespace MWLathe.Records
     public class FACT : Record
     {
         public string NAME { get; set; }
-        public string FNAM { get; set; }
+        public string? FNAM { get; set; }
         public List<string> RankNames { get; set; } = new List<string>();
-        public FADT FADT { get; set; } = new FADT();
+        public FADT? FADT { get; set; }
         public List<(string, int)> Reactions { get; set; } = new List<(string, int)>();
 
         public override void Populate(BufferedStream bs)
@@ -41,6 +41,7 @@ namespace MWLathe.Records
                         RankNames.Add(rankName);
                         break;
                     case "FADT":
+                        FADT = new FADT();
                         bytesRead += bs.Read(buffer, 0, 8);
                         FADT.Attribute1 = BitConverter.ToUInt32(buffer);
                         FADT.Attribute2 = BitConverter.ToUInt32(buffer, 4);
@@ -98,9 +99,15 @@ namespace MWLathe.Records
         {
             base.CalculateRecordSize();
             RecordSize += (uint)(8 + NAME.Length + 1);
-            RecordSize += (uint)(8 + FNAM.Length + 1);
+            if (FNAM is not null)
+            {
+                RecordSize += (uint)(8 + FNAM.Length + 1);
+            }
             RecordSize += (uint)RankNames.Count * (32 + 8);
-            RecordSize += FADT.StructSize + 8;
+            if (FADT is not null)
+            {
+                RecordSize += FADT.StructSize + 8;
+            }
             RecordSize += (uint)Reactions.Sum(x => 8 + x.Item1.Length + 8 + 4);
         }
 
@@ -110,16 +117,22 @@ namespace MWLathe.Records
             ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("NAME"));
             ts.Write(BitConverter.GetBytes(NAME.Length + 1));
             ts.Write(EncodeZString(NAME));
-            ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
-            ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
-            ts.Write(EncodeZString(FNAM));
+            if (FNAM is not null)
+            {
+                ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("FNAM"));
+                ts.Write(BitConverter.GetBytes(FNAM.Length + 1));
+                ts.Write(EncodeZString(FNAM));
+            }
             foreach (var rankName in RankNames)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("RNAM"));
                 ts.Write(BitConverter.GetBytes(32));
                 ts.Write(EncodeChar32(rankName));
             }
-            FADT.Write(ts);
+            if (FADT is not null)
+            {
+                FADT.Write(ts);
+            }
             foreach (var reaction in Reactions)
             {
                 ts.Write(Encoding.GetEncoding("Windows-1252").GetBytes("ANAM"));
